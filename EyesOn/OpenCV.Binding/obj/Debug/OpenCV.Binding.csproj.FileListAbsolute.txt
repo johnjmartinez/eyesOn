@@ -1,4 +1,0 @@
-C:\Users\John Martinez\XamarinVS\eyeson\EyesOn\OpenCV.Binding\bin\Debug\AnyCPU\OpenCV.dll
-C:\Users\John Martinez\XamarinVS\eyeson\EyesOn\OpenCV.Binding\bin\Debug\AnyCPU\OpenCV.pdb
-C:\Users\John Martinez\XamarinVS\eyeson\EyesOn\OpenCV.Binding\obj\Debug\OpenCV.dll
-C:\Users\John Martinez\XamarinVS\eyeson\EyesOn\OpenCV.Binding\obj\Debug\OpenCV.pdb
