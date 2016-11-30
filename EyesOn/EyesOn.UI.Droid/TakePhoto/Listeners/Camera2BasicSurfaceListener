@@ -1,0 +1,52 @@
+
+using Android.Util;
+using Android.Views;
+
+namespace EyesOn.UI.Droid.TakePhoto.Listeners
+{
+    public class Camera2BasicSurfaceListener : Java.Lang.Object, ISurfaceHolderCallback
+    {
+        public TakePhotoActivity3 Owner { get; set; }
+        public string TAG = "Camera2BasicSurfaceListener";
+
+        public Camera2BasicSurfaceListener(TakePhotoActivity3 owner)
+        {
+            Owner = owner;
+        }
+
+        #region ISurfaceHolderCallback
+
+        public void SurfaceCreated(ISurfaceHolder holder)
+        {
+            // Surface has been created, acquire camera and tell it where
+            // to draw.
+            try
+            {
+                //if (Owner.GetTranspViewHolder() == holder)
+                    //Owner.DrawFocusRect(holder, Android.Graphics.Color.Yellow);
+            }
+            catch (Java.IO.IOException exception)
+            {
+                Log.Error(TAG, "IOException caused by setPreviewDisplay()", exception);
+            }
+        }
+
+        public void SurfaceDestroyed(ISurfaceHolder holder)
+        {
+            // Surface will be destroyed when return, so stop preview.
+            //if (PreviewCamera != null)
+            //{
+            //   PreviewCamera.StopPreview();
+            //}
+        }
+
+        public void SurfaceChanged(ISurfaceHolder holder, Android.Graphics.Format format, int w, int h)
+        {
+            // Now that size is known, set up camera parameters and begin preview.
+            //if (Owner.GetTranspViewHolder() == holder)
+                //Owner.DrawFocusRect(holder, Android.Graphics.Color.Yellow);
+        }
+
+        #endregion
+    }
+}

@@ -1,0 +1,386 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.IO;
+using System.Drawing;
+
+using Android.App;
+using Android.Content;
+using Android.OS;
+using Android.Runtime;
+using Android.Views;
+using Android.Widget;
+using Android.Util;
+using Android.Hardware;
+//using Android.Graphics;
+
+using Emgu.CV;
+using Emgu.CV.Structure;
+using Emgu.Util;
+
+//using OpenCV.Core;
+//using OpenCV.ObjDetect;
+//using OpenCV.Android;
+//using OpenCV.ImgProc;
+//using Size = OpenCV.Core.Size;
+
+//using Java.IO;
+//using Java.Lang;
+
+using EyesOn.UI.Droid.Utilities;
+using EyesOn.UI.Droid.ColorBlobDetection;
+
+namespace EyesOn.UI.Droid.TakePhoto
+{
+    [Activity(Label = "Take Photo 2", ScreenOrientation = Android.Content.PM.ScreenOrientation.Landscape)]
+    public class TakePhotoActivity2 : Activity // , ISurfaceHolderCallback
+    {
+        Preview mPreview;
+        Camera mCamera;
+        int numberOfCameras;
+        int cameraCurrentlyLocked;
+
+        // The first rear facing camera
+        int defaultCameraId;
+
+        public TakePhotoActivity2()
+        {
+        }
+
+        protected override void OnCreate(Bundle savedInstanceState)
+        {
+            base.OnCreate(savedInstanceState);
+
+            // Hide the window title and go fullscreen.
+            RequestWindowFeature(WindowFeatures.NoTitle);
+            Window.AddFlags(WindowManagerFlags.Fullscreen);
+
+            SetContentView(Resource.Layout.take_photo_surface_view);
+            SurfaceView mSV = (SurfaceView) FindViewById (Resource.Id.CameraView);
+            SurfaceView mSVT = (SurfaceView) FindViewById (Resource.Id.TransparentView);
+
+            // Create our Preview view and set it as the content of our activity.
+            mPreview = new Preview(this, mSV, mSVT);
+            //SetContentView(mPreview);
+
+            // Find the total number of cameras available
+            numberOfCameras = Camera.NumberOfCameras;
+
+            // Find the ID of the default camera
+            Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+            for (int i = 0; i < numberOfCameras; i++)
+            {
+                Camera.GetCameraInfo(i, cameraInfo);
+                if (cameraInfo.Facing == CameraFacing.Back)
+                {
+                    defaultCameraId = i;
+                }
+            }
+        }
+
+        protected override void OnResume()
+        {
+            base.OnResume();
+
+            // Open the default i.e. the first rear facing camera.
+            mCamera = Camera.Open();
+            cameraCurrentlyLocked = defaultCameraId;
+            mPreview.PreviewCamera = mCamera;
+        }
+
+        protected override void OnPause()
+        {
+            base.OnPause();
+
+            // Because the Camera object is a shared resource, it's very
+            // important to release it when the activity is paused.
+            if (mCamera != null)
+            {
+                mPreview.PreviewCamera = null;
+                mCamera.Release();
+                mCamera = null;
+            }
+        }
+    }
+
+    class Preview :  ViewGroup, ISurfaceHolderCallback, Camera.IPreviewCallback
+    {
+        string TAG = "Preview";
+
+        //RelativeLayout mLayout;
+        SurfaceView mSurfaceView;
+        SurfaceView mSurfaceViewTransparent;
+
+        //ISurfaceHolder mHolder;
+        Camera.Size mPreviewSize;
+        IList<Camera.Size> mSupportedPreviewSizes;
+        Camera _camera;
+
+        float L, T, R, B ;
+
+        public Camera PreviewCamera
+        {
+            get { return _camera; }
+            set
+            {
+                _camera = value;
+                if (_camera != null)
+                {
+                    mSupportedPreviewSizes = PreviewCamera.GetParameters().SupportedPreviewSizes;
+                    RequestLayout();
+                }
+            }
+        }
+
+        public Preview(Context context, SurfaceView mSV, SurfaceView mSVT) : base(context)
+        {
+            //camera surface
+            mSurfaceView = mSV;
+            mSurfaceView.Holder.AddCallback(this);
+
+            //transparent overlay
+            mSurfaceViewTransparent = mSVT;
+            mSurfaceViewTransparent.SetZOrderOnTop(true);
+            mSurfaceViewTransparent.BringToFront();
+
+            mSurfaceViewTransparent.Holder.SetFormat(Android.Graphics.Format.Transparent);
+            mSurfaceViewTransparent.Holder.AddCallback(this);
+
+            var manager = Context.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
+            var size = new Android.Graphics.Point();
+            manager.DefaultDisplay.GetSize(size); 
+
+            float centerX = size.X / 2;
+            float centerY = size.Y / 2;
+
+            L = centerX - 100;
+            T = centerY - 100;
+            R = centerX + 100;
+            B = centerY + 100;
+        }
+
+        private void DrawFocusRect(ISurfaceHolder holder, float RectLeft, float RectTop, float RectRight, 
+            float RectBottom, Android.Graphics.Color color)
+        {
+            //lock
+            var canvas = holder.LockCanvas();
+
+            //no pointer to canvas? <---------- this is where current problem is
+            if (canvas == null) return;
+
+            //clear out
+            canvas.DrawColor(Android.Graphics.Color.Black, Android.Graphics.PorterDuff.Mode.Clear);
+
+            //border's properties
+            var paint = new Android.Graphics.Paint();
+            paint.SetStyle(Android.Graphics.Paint.Style.Stroke);
+            paint.Color = color;
+            paint.StrokeWidth = 3;
+            canvas.DrawRect(RectLeft, RectTop, RectRight, RectBottom, paint);
+
+            //unlock
+            holder.UnlockCanvasAndPost(canvas);
+        }
+
+        /*public void SwitchCamera(Camera camera)
+        {
+            PreviewCamera = camera;
+
+            try
+            {
+                camera.SetPreviewDisplay(mHolder);
+            }
+            catch (Java.IO.IOException exception)
+            {
+                Log.Error(TAG, "IOException caused by setPreviewDisplay()", exception);
+            }
+
+            Camera.Parameters parameters = camera.GetParameters();
+            parameters.SetPreviewSize(mPreviewSize.Width, mPreviewSize.Height);
+            RequestLayout();
+
+            camera.SetParameters(parameters);
+        }*/
+
+        protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
+        {
+            // We purposely disregard child measurements because act as a
+            // wrapper to a SurfaceView that centers the camera preview instead
+            // of stretching it.
+            int width = ResolveSize(SuggestedMinimumWidth, widthMeasureSpec);
+            int height = ResolveSize(SuggestedMinimumHeight, heightMeasureSpec);
+            SetMeasuredDimension(width, height);
+
+            if (mSupportedPreviewSizes != null)
+            {
+                mPreviewSize = GetOptimalPreviewSize(mSupportedPreviewSizes, width, height);
+            }
+        }
+
+        protected override void OnLayout(bool changed, int l, int t, int r, int b)
+        {
+            if (changed && ChildCount > 0)
+            {
+                View child = GetChildAt(0);
+
+                int width = r - l;
+                int height = b - t;
+
+                int previewWidth = width;
+                int previewHeight = height;
+                if (mPreviewSize != null)
+                {
+                    previewWidth = mPreviewSize.Width;
+                    previewHeight = mPreviewSize.Height;
+                }
+
+                // Center the child SurfaceView within the parent.
+                if (width * previewHeight > height * previewWidth)
+                {
+                    int scaledChildWidth = previewWidth * height / previewHeight;
+                    child.Layout((width - scaledChildWidth) / 2, 0,
+                                 (width + scaledChildWidth) / 2, height);
+                }
+                else
+                {
+                    int scaledChildHeight = previewHeight * width / previewWidth;
+                    child.Layout(0, (height - scaledChildHeight) / 2,
+                                 width, (height + scaledChildHeight) / 2);
+                }
+            }
+        }
+
+        public void SurfaceCreated(ISurfaceHolder holder)
+        {
+            // The Surface has been created, acquire the camera and tell it where
+            // to draw.
+            try
+            {
+                if (mSurfaceViewTransparent.Holder == holder)
+                {
+                    DrawFocusRect(holder, L, T, R, B, Android.Graphics.Color.Yellow);
+                }
+                if (mSurfaceView.Holder == holder)
+                {
+                    if (PreviewCamera != null)
+                    {
+                        PreviewCamera.SetPreviewDisplay(holder);
+                    }
+                }
+            }
+            catch (Java.IO.IOException exception)
+            {
+                Log.Error(TAG, "IOException caused by setPreviewDisplay()", exception);
+            }
+        }
+
+        public void SurfaceDestroyed(ISurfaceHolder holder)
+        {
+            // Surface will be destroyed when we return, so stop the preview.
+            if (PreviewCamera != null)
+            {
+                PreviewCamera.StopPreview();
+            }
+        }
+
+        private Camera.Size GetOptimalPreviewSize(IList<Camera.Size> sizes, int w, int h)
+        {
+            const double ASPECT_TOLERANCE = 0.1;
+            double targetRatio = (double)w / h;
+
+            if (sizes == null)
+                return null;
+
+            Camera.Size optimalSize = null;
+            double minDiff = Double.MaxValue;
+
+            int targetHeight = h;
+
+            // Try to find an size match aspect ratio and size
+            foreach (Camera.Size size in sizes)
+            {
+                double ratio = (double)size.Width / size.Height;
+
+                if (Math.Abs(ratio - targetRatio) > ASPECT_TOLERANCE)
+                    continue;
+
+                if (Math.Abs(size.Height - targetHeight) < minDiff)
+                {
+                    optimalSize = size;
+                    minDiff = Math.Abs(size.Height - targetHeight);
+                }
+            }
+
+            // Cannot find the one match the aspect ratio, ignore the requirement
+            if (optimalSize == null)
+            {
+                minDiff = Double.MaxValue;
+                foreach (Camera.Size size in sizes)
+                {
+                    if (Math.Abs(size.Height - targetHeight) < minDiff)
+                    {
+                        optimalSize = size;
+                        minDiff = Math.Abs(size.Height - targetHeight);
+                    }
+                }
+            }
+
+            return optimalSize;
+        }
+
+        public void SurfaceChanged(ISurfaceHolder holder, Android.Graphics.Format format, int w, int h)
+        {
+            // Now that the size is known, set up the camera parameters and begin
+            // the preview.
+            if (mSurfaceViewTransparent.Holder == holder)
+            {
+                DrawFocusRect(holder, L, T, R, B, Android.Graphics.Color.Yellow);
+            }
+            if (mSurfaceView.Holder == holder)
+            {
+                Camera.Parameters parameters = PreviewCamera.GetParameters();
+                Camera.Size previewSize = PreviewCamera.GetParameters().SupportedPreviewSizes.FirstOrDefault();
+                parameters.SetPreviewSize(previewSize.Width, previewSize.Height);
+                RequestLayout();
+
+                PreviewCamera.SetParameters(parameters);
+                //setup callback & buffers
+                //PreviewCamera.SetPreviewCallbackWithBuffer(null);
+                //PreviewCamera.SetPreviewCallbackWithBuffer(catcher);
+                //for (int i = 0; i < NUM_CAMERA_PREVIEW_BUFFERS; i++)
+                //{
+                //    byte[] cameraBuffer = new byte[bufferSize];
+                //    PreviewCamera.AddCallbackBuffer(cameraBuffer);
+                //}
+
+                //start camera
+                PreviewCamera.StartPreview();
+            }
+        }
+
+        public void OnPreviewFrame(byte[] data, Camera camera)
+        {
+            if (mExpectedSize != data.length)
+            {
+                throw new UnsupportedOperationException("bad size, got " + data.length + " expected " + mExpectedSize);
+            }
+            mFrames++;
+            camera.addCallbackBuffer(data);
+        }
+    }
+
+    //class FrameCatcher : Camera.IPreviewCallback
+    //{
+    //    public int mFrames = 0;
+    //    private int mExpectedSize;
+    //    public FrameCatcher(int width, int height)
+    //    {
+    //        mExpectedSize = width * height * 3 / 2;
+    //    }
+
+    //    public override 
+
+
+
+   }

@@ -1,0 +1,212 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{B0CA11CE-DA89-42F0-BBC8-3FB8FE493586}</ProjectGuid>
+    <ProjectTypeGuids>{EFBA0AD7-5A72-4C68-AF49-83D382785DCF};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>EyesOn.UI.Droid</RootNamespace>
+    <AssemblyName>EyesOn.UI.Droid</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <AndroidApplication>true</AndroidApplication>
+    <AndroidResgenFile>Resources\Resource.Designer.cs</AndroidResgenFile>
+    <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
+    <AndroidUseLatestPlatformSdk>True</AndroidUseLatestPlatformSdk>
+    <TargetFrameworkVersion>v6.0</TargetFrameworkVersion>
+    <AndroidManifest>Properties\AndroidManifest.xml</AndroidManifest>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AndroidUseSharedRuntime>True</AndroidUseSharedRuntime>
+    <AndroidLinkMode>None</AndroidLinkMode>
+    <EmbedAssembliesIntoApk>False</EmbedAssembliesIntoApk>
+    <BundleAssemblies>False</BundleAssemblies>
+    <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+    <AndroidSupportedAbis>armeabi;armeabi-v7a;arm64-v8a</AndroidSupportedAbis>
+    <Debugger>Xamarin</Debugger>
+    <AotAssemblies>False</AotAssemblies>
+    <EnableLLVM>False</EnableLLVM>
+    <AndroidEnableMultiDex>False</AndroidEnableMultiDex>
+    <EnableProguard>False</EnableProguard>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <AndroidManagedSymbols>true</AndroidManagedSymbols>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AndroidUseSharedRuntime>False</AndroidUseSharedRuntime>
+    <AndroidLinkMode>SdkOnly</AndroidLinkMode>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Mono.Android" />
+    <Reference Include="mscorlib" />
+    <Reference Include="OpenCV">
+      <HintPath>..\OpenCV.Binding\obj\Debug\OpenCV.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AppPreference.cs" />
+    <Compile Include="CameraCalibration\CalibrationResult.cs" />
+    <Compile Include="CameraCalibration\CameraCalibrationActivity.cs" />
+    <Compile Include="CameraCalibration\CameraCalibrator.cs" />
+    <Compile Include="CameraCalibration\OnCameraFrameRender.cs" />
+    <Compile Include="CameraControl\CameraControlActivity.cs" />
+    <Compile Include="CameraControl\CameraControlView.cs" />
+    <Compile Include="CameraPreview\CameraPreviewActivity.cs" />
+    <Compile Include="ColorBlobDetection\ColorBlobDetectionActivit2.cs" />
+    <None Include="ColorBlobDetection\ColorBlobDetectionActivity" />
+    <Compile Include="ColorBlobDetection\ColorBlobDetector.cs" />
+    <Compile Include="TakePhoto\CompareSizesByArea.cs" />
+    <Compile Include="DroidPlatformService.cs" />
+    <Compile Include="MainActivity.cs" />
+    <None Include="Preview" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Resources\Resource.Designer.cs" />
+    <Compile Include="TakePhoto\AutoFitTextureView.cs" />
+    <None Include="TakePhoto\Listeners\Camera2BasicSurfaceListener" />
+    <Compile Include="TakePhoto\Listeners\Camera2BasicSurfaceTextureListener.cs" />
+    <Compile Include="TakePhoto\Listeners\CameraCaptureListener.cs" />
+    <Compile Include="TakePhoto\Listeners\CameraCaptureSessionCallback.cs" />
+    <Compile Include="TakePhoto\Listeners\CameraCapturePreviewSessionCallback.cs" />
+    <Compile Include="TakePhoto\Listeners\CameraCaptureStillPictureSessionCallback.cs" />
+    <Compile Include="TakePhoto\Listeners\CameraStateListener.cs" />
+    <Compile Include="TakePhoto\Listeners\ImageAvailableListener.cs" />
+    <None Include="TakePhoto\TakePhotoActivity5" />
+    <Compile Include="TakePhoto\TakePhotoActivity4.cs" />
+    <None Include="TakePhoto\TakePhotoActivityJJM" />
+    <Compile Include="TakePhoto\TakePhotoActivity3.cs" />
+    <None Include="TakePhoto\DetectionBasedTracker" />
+    <None Include="TakePhoto\TakePhotoActivity2" />
+    <None Include="TakePhoto\TakePhotoActivity" />
+    <Compile Include="Utilities\ActivityTags.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\AboutAssets.txt" />
+    <AndroidResource Include="Resources\menu\calibration.axml" />
+    <AndroidResource Include="Resources\layout\CameraPreview.axml" />
+    <AndroidResource Include="Resources\layout\color_blob_detection_surface_view.axml" />
+    <AndroidResource Include="Resources\layout\face_detect_surface_view.axml" />
+    <AndroidResource Include="Resources\layout\Main.axml" />
+    <AndroidResource Include="Resources\layout\Puzzle.axml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\values\Strings.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\drawable\Icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidNativeLibrary Include="lib\arm64-v8a\libdetection_based_tracker.so" />
+    <AndroidNativeLibrary Include="lib\arm64-v8a\libmixed_sample.so" />
+    <AndroidNativeLibrary Include="lib\armeabi-v7a\libdetection_based_tracker.so" />
+    <AndroidNativeLibrary Include="lib\armeabi-v7a\libmixed_sample.so" />
+    <AndroidNativeLibrary Include="lib\armeabi\libdetection_based_tracker.so" />
+    <AndroidNativeLibrary Include="lib\armeabi\libmixed_sample.so" />
+    <AndroidNativeLibrary Include="lib\x86\libdetection_based_tracker.so" />
+    <AndroidNativeLibrary Include="lib\x86\libmixed_sample.so" />
+    <AndroidNativeLibrary Include="lib\x86_64\libdetection_based_tracker.so" />
+    <AndroidNativeLibrary Include="lib\x86_64\libmixed_sample.so" />
+    <None Include="Properties\AndroidManifest.xml">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Emgu\Emgu.CV.World\Emgu.CV.World.Android.csproj">
+      <Project>{5f102c71-65c3-4d77-ae48-29c1e75f82be}</Project>
+      <Name>Emgu.CV.World.Android</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\EyesOn.Data.Model\EyesOn.Data.Model.csproj">
+      <Project>{de8d1d9e-3bed-4a06-a46e-d4d532be2d0e}</Project>
+      <Name>EyesOn.Data.Model</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\EyesOn\EyesOn.csproj">
+      <Project>{98e136fd-005c-4d81-9d00-2d2e1febb3ba}</Project>
+      <Name>EyesOn</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\layout\tutorial3_surface_view.xml" />
+    <AndroidResource Include="Resources\layout\tutorial2_surface_view.xml" />
+    <AndroidResource Include="Resources\layout\image_manipulations_surface_view.xml" />
+    <AndroidResource Include="Resources\layout\take_photo_surface_view.xml" />
+    <AndroidAsset Include="Assets\lbpcascade_frontalface.xml" />
+    <AndroidAsset Include="Assets\haarcascade_eye.xml" />
+    <AndroidAsset Include="Assets\haarcascade_frontalface_default.xml" />
+    <AndroidResource Include="Resources\layout\camera_calibration_surface_view.xml" />
+    <AndroidAsset Include="Assets\lena.jpg" />
+    <AndroidResource Include="Resources\layout\haarcascade_frontalface_default.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AndroidResource>
+    <AndroidAsset Include="Assets\haarcascade_frontalface_alt.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AndroidAsset>
+    <AndroidAsset Include="Assets\haarcascade_frontalface_alt2.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AndroidAsset>
+    <AndroidAsset Include="Assets\haarcascade_frontalface_alt_tree.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AndroidAsset>
+    <AndroidResource Include="Resources\raw\haarcascade_eye.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AndroidResource>
+    <AndroidResource Include="Resources\raw\haarcascade_frontalface_alt.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AndroidResource>
+    <AndroidResource Include="Resources\raw\haarcascade_frontalface_alt_tree.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AndroidResource>
+    <AndroidResource Include="Resources\raw\lbpcascade_frontalface.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AndroidResource>
+    <AndroidResource Include="Resources\xml\haarcascade_eye.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AndroidResource>
+    <AndroidResource Include="Resources\xml\haarcascade_frontalface_alt.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AndroidResource>
+    <AndroidResource Include="Resources\xml\haarcascade_frontalface_alt_tree.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AndroidResource>
+    <AndroidResource Include="Resources\xml\haarcascade_frontalface_alt2.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AndroidResource>
+    <AndroidResource Include="Resources\xml\haarcascade_frontalface_default.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AndroidResource>
+    <Content Include="TakePhoto\jni\Android.mk" />
+    <Content Include="TakePhoto\jni\Application.mk" />
+    <Content Include="TakePhoto\jni\DetectionBasedTracker_jni.cpp" />
+    <Content Include="TakePhoto\jni\DetectionBasedTracker_jni.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="res\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+     Other similar extension points exist, see Microsoft.Common.targets.
+		<Target Name="BeforeBuild">
+		</Target>
+		<Target Name="AfterBuild">
+		</Target>
+ -->
+</Project>

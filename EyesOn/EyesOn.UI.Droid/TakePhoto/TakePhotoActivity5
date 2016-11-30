@@ -1,0 +1,249 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+//using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Drawing;
+
+using Android;
+using Android.App;
+using Android.Content;
+using Android.Content.PM;
+using Android.OS;
+using Android.Util;
+using Android.Views;
+using Android.Widget;
+using Android.Hardware.Camera2;
+using Android.Graphics;
+using Android.Hardware.Camera2.Params;
+using Android.Media;
+using Android.Runtime;
+using Android.Preferences;
+//using Android.Support.V13.App;
+//using Android.Support.V4.Content;
+
+using OpenCV.Core;
+using OpenCV.ObjDetect;
+using OpenCV.Android;
+using OpenCV.ImgProc;
+using Size = OpenCV.Core.Size;
+
+using Java.IO;
+using Java.Lang;
+using Java.Util;
+using Java.Util.Concurrent;
+
+using Boolean = Java.Lang.Boolean;
+using Math = Java.Lang.Math;
+using Orientation = Android.Content.Res.Orientation;
+
+//using OpenCV.Core;
+//using OpenCV.ObjDetect;
+//using OpenCV.Android;
+//using OpenCV.ImgProc;
+//using Size = OpenCV.Core.Size;
+
+//using Java.IO;
+//using Java.Lang;
+
+using EyesOn.UI.Droid.Utilities;
+using EyesOn.UI.Droid.ColorBlobDetection;
+using EyesOn.UI.Droid.TakePhoto.Listeners;
+
+namespace EyesOn.UI.Droid.TakePhoto
+{
+    [Activity(Label = "Take Photo 4", ScreenOrientation = Android.Content.PM.ScreenOrientation.Landscape)]
+    public class TakePhotoActivity5 : Activity, ISurfaceHolderCallback
+    {
+        float L, T, R, B;
+        float screenX;
+        float screenY;
+        string eyeXml;
+        string faceXml;
+
+        public TakePhotoActivity5()
+        {
+        }
+
+        protected override void OnCreate(Bundle savedInstanceState)
+        {
+            base.OnCreate(savedInstanceState);
+
+            
+
+            // Hide the window title and go fullscreen.
+            RequestWindowFeature(WindowFeatures.NoTitle);
+            Window.AddFlags(WindowManagerFlags.Fullscreen);
+
+            SetContentView(Resource.Layout.take_photo_surface_view);
+            //SurfaceView mSV = (SurfaceView)FindViewById(Resource.Id.CameraView);
+            //mTextureView = (AutoFitTextureView)FindViewById(Resource.Id.CameraView);
+            mTransparentView = (SurfaceView)FindViewById(Resource.Id.TransparentView);
+
+            mTransparentView.SetZOrderOnTop(true);
+            mTransparentView.BringToFront();
+
+            mTransparentView.Holder.SetFormat(Android.Graphics.Format.Transparent);
+            mTransparentView.Holder.AddCallback(this);
+
+            var manager = GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
+            var size = new Android.Graphics.Point();
+            manager.DefaultDisplay.GetSize(size);
+
+            screenX = size.X / 2;
+            screenY = size.Y / 2;
+
+            L = screenX - 100;
+            T = screenY - 100;
+            R = screenX + 100;
+            B = screenY + 100;           
+        }
+
+        protected override void OnResume()
+        {
+            base.OnResume();
+        }
+
+        protected override void OnPause()
+        {
+            base.OnPause();
+        }
+
+        //for drawing
+        private SurfaceView mTransparentView;
+
+        private void DrawFocusRect(ISurfaceHolder holder, float RectLeft, float RectTop, float RectRight, float RectBottom, Android.Graphics.Color color)
+        {
+            //detect face
+            var results = Detect();
+
+            //lock
+            var canvas = holder.LockCanvas();
+
+            //no pointer to canvas? <---------- this is where current problem is
+            if (canvas == null) return;
+
+            //clear out
+            canvas.DrawColor(Android.Graphics.Color.Transparent, Android.Graphics.PorterDuff.Mode.Clear);
+
+            //border's properties
+            var paint = new Android.Graphics.Paint();
+            paint.SetStyle(Android.Graphics.Paint.Style.Stroke);
+            paint.Color = color;
+            paint.StrokeWidth = 3;
+            canvas.DrawRect(RectLeft, RectTop, RectRight, RectBottom, paint);
+
+            //unlock
+            holder.UnlockCanvasAndPost(canvas);
+        }
+
+        private class FaceEyes
+        {
+            public List<Rectangle> Faces { get; set; } = new List<Rectangle>();
+            public List<Rectangle> Eyes { get; set; } = new List<Rectangle>();
+
+            public int Count
+            {
+                get
+                {
+                    return Faces.Count + Eyes.Count;
+                }
+            }
+        }        
+
+        //trying to detect just using the java library...
+        private FaceEyes Detect()
+        {
+            FaceEyes FE = new FaceEyes();
+
+            float mRelativeFaceSize = 0.2f;
+            int mAbsoluteFaceSize = 0;
+            
+            //load stock image
+            File cascadeDir;
+            byte[] lena = null;
+            // load cascade file from application resources
+            using (var istr = Resources.OpenRawResource(Resource.Raw.lena))
+            {
+                lena = new byte[istr.Length];
+                istr.Read(lena, 0, (int)istr.Length);                
+            }
+
+            //create color Mat
+            var image = new OpenCV.Core.Mat();
+            image.Put(0, 0, lena);
+
+            //create gray mat
+            Mat mGray = new Mat();
+            Imgproc.CvtColor(image, mGray, Imgproc.ColorBgr2gray);
+
+            if (mAbsoluteFaceSize == 0)
+            {
+                int height = mGray.Rows();
+                if (Java.Lang.Math.Round(height * mRelativeFaceSize) > 0)
+                {
+                    mAbsoluteFaceSize = Java.Lang.Math.Round(height * mRelativeFaceSize);
+                }
+                //mNativeDetector.setMinFaceSize(mAbsoluteFaceSize);
+            }
+
+            MatOfRect faces = new MatOfRect();
+
+            OpenCV.ObjDetect.CascadeClassifier mJavaDetector = new OpenCV.ObjDetect.CascadeClassifier(faceXml);
+
+            mJavaDetector.DetectMultiScale(mGray, faces, 1.1, 2, 2, // TODO: objdetect.CV_HAAR_SCALE_IMAGE
+                        new Size(mAbsoluteFaceSize, mAbsoluteFaceSize), new Size());
+
+
+
+            foreach (var f in faces.ToList())
+            {
+                //draw rectangles
+            }
+
+            return FE;
+        }
+
+        #region ISurfaceHolderCallback
+
+        public void SurfaceCreated(ISurfaceHolder holder)
+        {
+            // The Surface has been created, acquire the camera and tell it where
+            // to draw.
+            try
+            {
+                if (mTransparentView.Holder == holder)
+                {
+                    DrawFocusRect(holder, L, T, R, B, Android.Graphics.Color.Yellow);
+                }                
+            }
+            catch (Java.IO.IOException exception)
+            {
+                Log.Error("TAG", "IOException caused by setPreviewDisplay()", exception);
+            }
+        }
+
+        public void SurfaceDestroyed(ISurfaceHolder holder)
+        {
+            // Surface will be destroyed when we return, so stop the preview.
+            //if (PreviewCamera != null)
+            //{
+            //    PreviewCamera.StopPreview();
+            //}
+        }
+
+        public void SurfaceChanged(ISurfaceHolder holder, Android.Graphics.Format format, int w, int h)
+        {
+            // Now that the size is known, set up the camera parameters and begin
+            // the preview.
+            if (mTransparentView.Holder == holder)
+            {
+                DrawFocusRect(holder, L, T, R, B, Android.Graphics.Color.Yellow);
+            }           
+        }
+
+        #endregion        
+    }
+}

@@ -1,0 +1,2 @@
+android.app.Application
+EyesOn.UI.Droid.EyesOn.UI.Droid
