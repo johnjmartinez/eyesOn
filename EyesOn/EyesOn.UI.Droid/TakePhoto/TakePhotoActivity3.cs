@@ -313,10 +313,10 @@ namespace EyesOn.UI.Droid.TakePhoto
         }
 
         private readonly object _lock = new object();
-        private volatile bool isBusy = false;
+        public volatile bool isBusy = false;
         private Task PreviewThread;
 
-        public void PreviewFrame(Mat yuvMat)
+        public void PreviewFrame(Mat fnMat)
         //public void PreviewFrame(Image yuvImg)
         {
             /* EMIL EXAMPLE 
@@ -383,7 +383,7 @@ namespace EyesOn.UI.Droid.TakePhoto
                             //Mat image = Yuv2Rgb(yuvImg);
                             //Mat rgbMat = new Mat();
                             //CvInvoke.CvtColor(yuvMat, rgbMat, Emgu.CV.CvEnum.ColorConversion.Yuv420P2Rgb);
-                            RESULTS = Detect(yuvMat);
+                            RESULTS = Detect(fnMat);
                             
                             RunOnUiThread(() =>
                             {
@@ -458,6 +458,7 @@ namespace EyesOn.UI.Droid.TakePhoto
 
         //private FaceEyes Detect(byte [] imageBytes)
         private FaceEyes Detect(Mat image2)
+        //private FaceEyes Detect(Mat ugray)
         {
             FaceEyes FE = new FaceEyes();
 
@@ -473,10 +474,10 @@ namespace EyesOn.UI.Droid.TakePhoto
             {
                 //watch = Stopwatch.StartNew();
                 Log.Error(TAG, "\t\t -- FaceEyes Detect()");
-
-                using (UMat ugray = new UMat())
-                {
-                    CvInvoke.CvtColor(image2, ugray, Emgu.CV.CvEnum.ColorConversion.Bgr2Gray);
+                //using (UMat ugray = new UMat())
+                //{
+                    Mat ugray = new Mat();
+                    CvInvoke.CvtColor(image2, ugray, Emgu.CV.CvEnum.ColorConversion.Rgb2Gray);
 
                     //normalizes brightness and increases contrast of the image
                     CvInvoke.EqualizeHist(ugray, ugray);
@@ -485,35 +486,34 @@ namespace EyesOn.UI.Droid.TakePhoto
                     //The first dimensional is the channel
                     //The second dimension is the index of the rectangle in the specific channel
                     Rectangle[] facesDetected = face.DetectMultiScale(
-                       ugray, 1.1, 10, new System.Drawing.Size(20, 20));
+                       ugray, 1.1, 10, new System.Drawing.Size(10,10));
 
                     FE.Faces.AddRange(facesDetected);
 
                     foreach (Rectangle f in facesDetected)
                     {
                         Log.Error(TAG, "\t\t -- FaceEyes Detect()\t FACE DETECTED");
-
+                        Mat faceRegion = new Mat(ugray, f);
                         //Get the region of interest on the faces
-                        using (UMat faceRegion = new UMat(ugray, f))
-                        {
+                        //using (UMat faceRegion = new UMat(ugray, f))
+                        //{
+
                             Rectangle[] eyesDetected = eye.DetectMultiScale(
                                faceRegion, 1.1, 10, new System.Drawing.Size(20, 20));
 
                             foreach (Rectangle e in eyesDetected)
                             {
-
                                 Log.Error(TAG, "\t\t -- FaceEyes Detect()\t EYE DETECTED");
 
                                 Rectangle eyeRect = e;
                                 eyeRect.Offset(f.X, f.Y);
                                 FE.Eyes.Add(eyeRect);
                             }
-                        }
+                        //}
                     }
                 }
-
                 //watch.Stop();
-            }
+            //}
 
             return FE;
         }
@@ -708,7 +708,8 @@ namespace EyesOn.UI.Droid.TakePhoto
                     //Android.Util.Size largest = (Android.Util.Size)Collections.Max(Arrays.AsList(map.GetOutputSizes((int)ImageFormatType.Jpeg)), 
                     //    new CompareSizesByArea());
                     //mImageReader = ImageReader.NewInstance(largest.Width, largest.Height, ImageFormatType.Jpeg, /*maxImages*/16);
-                    mImageReader = ImageReader.NewInstance(1280, 720, ImageFormatType.Yuv420888, 2);
+                    //mImageReader = ImageReader.NewInstance(1280, 720, ImageFormatType.Yuv420888, 2);
+                    mImageReader = ImageReader.NewInstance(854, 480, ImageFormatType.Jpeg, 2);
                     mImageReader.SetOnImageAvailableListener(mOnImageAvailableListener, mBackgroundHandler);
 
                     // Find out if we need to swap dimension to get the preview size relative to sensor
@@ -722,16 +723,12 @@ namespace EyesOn.UI.Droid.TakePhoto
                         case SurfaceOrientation.Rotation0:
                         case SurfaceOrientation.Rotation180:
                             if (mSensorOrientation == 90 || mSensorOrientation == 270)
-                            {
                                 swappedDimensions = true;
-                            }
                             break;
                         case SurfaceOrientation.Rotation90:
                         case SurfaceOrientation.Rotation270:
                             if (mSensorOrientation == 0 || mSensorOrientation == 180)
-                            {
                                 swappedDimensions = true;
-                            }
                             break;
                         default:
                             Log.Error(TAG, "Display rotation is invalid: " + displayRotation);
@@ -754,14 +751,10 @@ namespace EyesOn.UI.Droid.TakePhoto
                     }
 
                     if (maxPreviewWidth > MAX_PREVIEW_WIDTH)
-                    {
                         maxPreviewWidth = MAX_PREVIEW_WIDTH;
-                    }
 
                     if (maxPreviewHeight > MAX_PREVIEW_HEIGHT)
-                    {
                         maxPreviewHeight = MAX_PREVIEW_HEIGHT;
-                    }
 
                     // Danger, W.R.! Attempting to use too large a preview size could  exceed the camera
                     // bus' bandwidth limitation, resulting in gorgeous previews but the storage of
@@ -769,29 +762,22 @@ namespace EyesOn.UI.Droid.TakePhoto
                     /*mPreviewSize = ChooseOptimalSize(map.GetOutputSizes(Class.FromType(typeof(SurfaceTexture))),
                         rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth,
                         maxPreviewHeight, largest);*/
-                    mPreviewSize = new Android.Util.Size(1280, 720);
-
+                    //mPreviewSize = new Android.Util.Size(1280, 720);
+                    mPreviewSize = new Android.Util.Size(854, 480);
+                    
                     // We fit the aspect ratio of TextureView to the size of preview we picked.
                     var orientation = Resources.Configuration.Orientation;
                     if (orientation == Orientation.Landscape)
-                    {
                         mTextureView.SetAspectRatio(mPreviewSize.Width, mPreviewSize.Height);
-                    }
                     else
-                    {
                         mTextureView.SetAspectRatio(mPreviewSize.Height, mPreviewSize.Width);
-                    }
 
                     // Check if the flash is supported.
                     var available = (Boolean)characteristics.Get(CameraCharacteristics.FlashInfoAvailable);
                     if (available == null)
-                    {
                         mFlashSupported = false;
-                    }
                     else
-                    {
                         mFlashSupported = (bool)available;
-                    }
 
                     mCameraId = cameraId;
                     return;
