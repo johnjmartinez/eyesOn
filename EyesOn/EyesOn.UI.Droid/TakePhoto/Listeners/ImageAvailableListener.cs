@@ -10,7 +10,7 @@ using Android.Graphics;
 
 namespace EyesOn.UI.Droid.TakePhoto.Listeners
 {
-    public class ImageAvailableListener : Java.Lang.Object, ImageReader.IOnImageAvailableListener
+    public class ImageAvailableListener : Object, ImageReader.IOnImageAvailableListener
     {
         public File File { get; set; }
         public TakePhotoActivity3 Owner { get; set; }
@@ -19,10 +19,33 @@ namespace EyesOn.UI.Droid.TakePhoto.Listeners
         {
             //if (Owner.CLEAR_CANVAS)
             //    Owner.mBackgroundHandler.Post(new ImageSaver(reader.AcquireNextImage(), Owner.mFile));
-            if (!Owner.isBusy)
-                return;
+            if (Owner.isBusy)
+            {   /*
+                Image mImage = reader.AcquireLatestImage();
 
-            //Android.Util.Log.Error("ImageAvailableListener", "OnImageAvailable");
+                ByteBuffer buffer = mImage.GetPlanes()[0].Buffer;
+                byte[] bytes = new byte[buffer.Remaining()];
+                buffer.Get(bytes);
+                using (var output = new FileOutputStream(Owner.mFile))
+                {
+                    try
+                    {
+                        output.Write(bytes);
+                        Android.Util.Log.Error("ImgAvailListener", "\t\tWROTE FILE "+ Owner.mFile.AbsolutePath);
+                    }
+                    catch (IOException e)
+                    {
+                        e.PrintStackTrace();
+                    }
+                    finally
+                    {
+                        mImage.Close();
+                    }
+                    */
+                    return;
+                //}
+            }
+            //Android.Util.Log.Error("ImgAvailListener", "OnImageAvailable");
             Image image = reader.AcquireLatestImage();
 
             if (image != null)
@@ -47,19 +70,14 @@ namespace EyesOn.UI.Droid.TakePhoto.Listeners
                     //pixels[i] =  (byte) Color.Argb(0xFF, p, p, p);
                     pixels[i] = (byte)Color.Rgb(p, p, p);
                 }
-
-                Mat imgMat = new Mat(image.Height, image.Width, Emgu.CV.CvEnum.DepthType.Cv8U, 3);
+                Mat imgMat = new Mat(image.Height, image.Width, Emgu.CV.CvEnum.DepthType.Cv8U, 1);
                 */
 
-                Mat imgMat = new Mat(image.Height, image.Width, Emgu.CV.CvEnum.DepthType.Cv8U, 1);
+                Mat imgMat = new Mat(image.Height, image.Width, Emgu.CV.CvEnum.DepthType.Cv8U, 3);
                 CvInvoke.Imdecode(data, Emgu.CV.CvEnum.ImreadModes.Unchanged, imgMat);
-                image.Close();
+                Android.Util.Log.Error("ImgAvailListener", "\t\timage sent:" + image.Width + "," + image.Height);
 
-                //Android.Util.Log.Error("ImageAvailableListener", "image.Close()");
-                //Imgcodecs.imdecode(new MatOfByte(bytes), Imgcodecs.CV_LOAD_IMAGE_UNCHANGED);
-                //var b2 = ByteBuffer.Wrap(bytes);
-                //var bitmap = Android.Graphics.Bitmap.CreateBitmap(image.Width, image.Height, Android.Graphics.Bitmap.Config.Rgb565);
-                //bitmap.CopyPixelsFromBuffer(b2);
+                image.Close();
 
                 Owner.PreviewFrame(imgMat);
             }

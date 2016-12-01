@@ -1,61 +1,33 @@
-//using System;
 using System.Collections.Generic;
-//using System.Linq;
-//using System.Text;
 using System.IO;
-//using System.Threading;
 using System.Threading.Tasks;
 using System.Drawing;
 
-//using Android;
 using Android.App;
 using Android.Content;
 using Android.Content.PM;
 using Android.OS;
 using Android.Util;
 using Android.Views;
-//using Android.Widget;
 using Android.Hardware.Camera2;
 using Android.Graphics;
 using Android.Hardware.Camera2.Params;
 using Android.Media;
 using Android.Runtime;
 using Android.Preferences;
-//using Android.Provider;
-//using Android.Support.V13.App;
-//using Android.Support.V4.Content;
 
-
-//using Java.IO;
 using Java.Lang;
 using Java.Util;
-//using Java.Util.Concurrent;
 
 using Boolean = Java.Lang.Boolean;
 using Math = Java.Lang.Math;
 using Orientation = Android.Content.Res.Orientation;
 
 using Emgu.CV;
-//using Emgu.CV.Structure;
 using Emgu.Util;
-
-//using OpenCV.Core;
-//using OpenCV.ObjDetect;
-//using OpenCV.Android;
-//using OpenCV.ImgProc;
-//using Size = OpenCV.Core.Size;
-
-//using Java.IO;
-//using Java.Lang;
-
-//using EyesOn.UI.Droid.Utilities;
-//using EyesOn.UI.Droid.ColorBlobDetection;
-using EyesOn.UI.Droid.TakePhoto.Listeners;
-
-//using OpenCV.Core;
-//using OpenCV.ImgProc;
 using Mat = Emgu.CV.Mat;
-//using Point = OpenCV.Core.Point;
+
+using EyesOn.UI.Droid.TakePhoto.Listeners;
 
 namespace EyesOn.UI.Droid.TakePhoto
 {
@@ -64,10 +36,8 @@ namespace EyesOn.UI.Droid.TakePhoto
     {
 
         float L, T, R, B;
-        float screenX;
-        float screenY;
-        string eyeXml;
-        string faceXml;
+        float screenX, screenY;
+        string eyeXml, faceXml;
         Android.Graphics.Color COLOR = Android.Graphics.Color.Green;
         FaceEyes RESULTS = null;
         public bool CLEAR_CANVAS = true;
@@ -75,6 +45,9 @@ namespace EyesOn.UI.Droid.TakePhoto
 
         CascadeClassifier face = null;
         CascadeClassifier eye = null;
+
+        int vWidth, vHeight;
+        int cWidth, cHeight;
 
         public TakePhotoActivity3()
         {
@@ -188,7 +161,7 @@ namespace EyesOn.UI.Droid.TakePhoto
 
         private static readonly SparseIntArray ORIENTATIONS = new SparseIntArray();
         public static readonly int REQUEST_CAMERA_PERMISSION = 1;
-        private static readonly string FRAGMENT_DIALOG = "dialog";
+        //private static readonly string FRAGMENT_DIALOG = "dialog";
 
         // Tag for the {@link Log}.
         private static readonly string TAG = "\t\tTakePhotoActivity3";
@@ -280,12 +253,14 @@ namespace EyesOn.UI.Droid.TakePhoto
             //no pointer to canvas?
             if (canvas == null) return;
             Log.Error(TAG, "\t\t --Drawing in canvas--");
-
+            /*
             Rectangle rect = new Rectangle((int)RectLeft, (int)RectTop, (int)RectRight, (int)RectBottom);
             var xCenter = (rect.X + rect.Width) / 2;
             var yCenter = (rect.Y + rect.Height) / 2;
-
+            */
             //clear out
+            canvas.Scale(vWidth/mPreviewSize.Width, vHeight/mPreviewSize.Height);
+
             if (CLEAR_CANVAS)
                 canvas.DrawColor(Android.Graphics.Color.Transparent, Android.Graphics.PorterDuff.Mode.Clear);
 
@@ -301,10 +276,16 @@ namespace EyesOn.UI.Droid.TakePhoto
             paint.Color = color;
             paint.StrokeWidth = 3;
             canvas.DrawRect(RectLeft, RectTop, RectRight, RectBottom, paint);
-            canvas.DrawText("RectLeft:" + RectLeft, 0, 30, paint);
-            canvas.DrawText("RectTop:" + RectTop, 0, 60, paint);
-            canvas.DrawText("RectRight:" + RectRight, 0, 90, paint);
-            canvas.DrawText("RectBottom:" + RectBottom, 0, 120, paint);
+
+            //DEBUG
+            //canvas.DrawText("RectLeft:" + RectLeft, 0, 30, paint);
+            //canvas.DrawText("RectTop:" + RectTop, 0, 60, paint);
+            //canvas.DrawText("RectRight:" + RectRight, 0, 90, paint);
+            //canvas.DrawText("RectBottom:" + RectBottom, 0, 120, paint);
+            canvas.DrawText("Canvas:" + canvas.Width + "," + canvas.Height  , 0, 30, paint);
+            canvas.DrawText("Mat   :" + mPreviewSize.Width + "," + mPreviewSize.Height, 0, 60, paint);
+            canvas.DrawText("View  :" + vWidth + "," + vHeight, 0, 90, paint);
+
 
             CLEAR_CANVAS = false;
 
@@ -375,7 +356,7 @@ namespace EyesOn.UI.Droid.TakePhoto
                     {
                         try
                         {
-                            face = new CascadeClassifier(faceXml);
+                            //face = new CascadeClassifier(faceXml);
                             eye = new CascadeClassifier(eyeXml);
 
                             Log.Error(TAG, "\t\t--PreviewThread: " + this);
@@ -384,23 +365,27 @@ namespace EyesOn.UI.Droid.TakePhoto
                             //Mat rgbMat = new Mat();
                             //CvInvoke.CvtColor(yuvMat, rgbMat, Emgu.CV.CvEnum.ColorConversion.Yuv420P2Rgb);
                             RESULTS = Detect(fnMat);
-                            
+                            CLEAR_CANVAS = true;
+
                             RunOnUiThread(() =>
                             {
+
                                 if (RESULTS != null && RESULTS.Count > 0)
                                 {
-                                    CLEAR_CANVAS = true;
-                                    COLOR = Android.Graphics.Color.White;
+                                    /*COLOR = Android.Graphics.Color.White;
                                     foreach (var face in RESULTS.Faces)
                                     {
                                         L = face.Left; T = face.Top;
                                         R = face.Right; B = face.Bottom;
 
                                         DrawFocusRect(mTransparentView.Holder, L, T, R, B, COLOR);
-                                    }
+                                    }*/
                                     foreach (var eye in RESULTS.Eyes)
                                     {
-                                        COLOR = Android.Graphics.Color.Blue;
+                                        L = eye.Left; T = eye.Top;
+                                        R = eye.Right; B = eye.Bottom;
+
+                                        COLOR = Android.Graphics.Color.Green;
                                         DrawFocusRect(mTransparentView.Holder, eye.Left, eye.Top, eye.Right, eye.Bottom, COLOR);
                                     }
                                 }
@@ -461,16 +446,7 @@ namespace EyesOn.UI.Droid.TakePhoto
         //private FaceEyes Detect(Mat ugray)
         {
             FaceEyes FE = new FaceEyes();
-
-            //Mat image = new Mat(Assets, "lena.jpg");
-            //BitmapRgb565Image image = new BitmapRgb565Image(bmp);
-            //var test = new Mat()
-            //var image = new Image<Bgr565, byte>(MAX_PREVIEW_WIDTH, MAX_PREVIEW_HEIGHT, );
-            //image.map
-            //image.Bytes = imageBytes;
-            //var image = new Image<Bgr565, byte>(100, 100, new Emgu.CV.Structure.Bgr565());
-
-            if (face != null && eye != null)
+         if (/*face != null &&*/ eye != null)
             {
                 //watch = Stopwatch.StartNew();
                 Log.Error(TAG, "\t\t -- FaceEyes Detect()");
@@ -482,38 +458,36 @@ namespace EyesOn.UI.Droid.TakePhoto
                     //normalizes brightness and increases contrast of the image
                     CvInvoke.EqualizeHist(ugray, ugray);
 
-                    //Detect the faces  from the gray scale image and store the locations as rectangle
-                    //The first dimensional is the channel
-                    //The second dimension is the index of the rectangle in the specific channel
-                    Rectangle[] facesDetected = face.DetectMultiScale(
-                       ugray, 1.1, 10, new System.Drawing.Size(10,10));
+                    //Rectangle[] facesDetected = face.DetectMultiScale(
+                    //   ugray, 1.1, 10, new System.Drawing.Size(10,10));
 
-                    FE.Faces.AddRange(facesDetected);
+                    //FE.Faces.AddRange(facesDetected);
 
-                    foreach (Rectangle f in facesDetected)
-                    {
-                        Log.Error(TAG, "\t\t -- FaceEyes Detect()\t FACE DETECTED");
-                        Mat faceRegion = new Mat(ugray, f);
+                    //foreach (Rectangle f in facesDetected)
+                    //{
+                        //Log.Error(TAG, "\t\t -- FaceEyes Detect()\t FACE DETECTED");
+                        //Mat faceRegion = new Mat(ugray, f);
                         //Get the region of interest on the faces
                         //using (UMat faceRegion = new UMat(ugray, f))
                         //{
 
-                            Rectangle[] eyesDetected = eye.DetectMultiScale(
-                               faceRegion, 1.1, 10, new System.Drawing.Size(20, 20));
+                        Rectangle[] eyesDetected = eye.DetectMultiScale(
+                                 ugray, 1.1, 20, new System.Drawing.Size(20, 20));
+                        //faceRegion, 1.1, 10, new System.Drawing.Size(20, 20));
 
-                            foreach (Rectangle e in eyesDetected)
-                            {
+                        foreach (Rectangle e in eyesDetected)
+                        {
                                 Log.Error(TAG, "\t\t -- FaceEyes Detect()\t EYE DETECTED");
 
                                 Rectangle eyeRect = e;
-                                eyeRect.Offset(f.X, f.Y);
+                                //eyeRect.Offset(e.X,e.Y); //offset from top(x)-left(y)
                                 FE.Eyes.Add(eyeRect);
-                            }
+                        }
                         //}
-                    }
-                }
+                    //}
+                //}
                 //watch.Stop();
-            //}
+            }
 
             return FE;
         }
@@ -547,7 +521,7 @@ namespace EyesOn.UI.Droid.TakePhoto
             //}
         }
 
-        public void SurfaceChanged(ISurfaceHolder holder, Android.Graphics.Format format, int w, int h)
+        public void SurfaceChanged(ISurfaceHolder holder, Format format, int w, int h)
         {
             /*
             // Now that the size is known, set up the camera parameters and begin
@@ -602,13 +576,9 @@ namespace EyesOn.UI.Droid.TakePhoto
                 if ((option.Width <= maxWidth) && (option.Height <= maxHeight))
                 {
                     if (option.Width >= textureViewWidth && option.Height >= textureViewHeight)
-                    {
                         bigEnough.Add(option);
-                    }
                     else
-                    {
                         notBigEnough.Add(option);
-                    }
                 }
             }
 
@@ -691,25 +661,21 @@ namespace EyesOn.UI.Droid.TakePhoto
                     var cameraId = manager.GetCameraIdList()[i];
                     CameraCharacteristics characteristics = manager.GetCameraCharacteristics(cameraId);
 
-                    // We don't use a front facing camera in this sample.
+                    //front facing camera
                     var facing = (Integer)characteristics.Get(CameraCharacteristics.LensFacing);
                     if (facing != null && facing == (Integer.ValueOf((int)LensFacing.Front)))
-                    {
                         continue;
-                    }
-
+                   
                     var map = (StreamConfigurationMap)characteristics.Get(CameraCharacteristics.ScalerStreamConfigurationMap);
-                    if (map == null)
-                    {
-                        continue;
-                    }
+                    if (map == null) continue;
+                    
 
                     // For still image captures, we use the largest available size.
-                    //Android.Util.Size largest = (Android.Util.Size)Collections.Max(Arrays.AsList(map.GetOutputSizes((int)ImageFormatType.Jpeg)), 
-                    //    new CompareSizesByArea());
-                    //mImageReader = ImageReader.NewInstance(largest.Width, largest.Height, ImageFormatType.Jpeg, /*maxImages*/16);
+                    Android.Util.Size largest = (Android.Util.Size)Collections.Max(Arrays.AsList(map.GetOutputSizes((int)ImageFormatType.Jpeg)), 
+                        new CompareSizesByArea());
+                    mImageReader = ImageReader.NewInstance(largest.Width/2, largest.Height/2, ImageFormatType.Jpeg, /*maxImages*/2);
                     //mImageReader = ImageReader.NewInstance(1280, 720, ImageFormatType.Yuv420888, 2);
-                    mImageReader = ImageReader.NewInstance(854, 480, ImageFormatType.Jpeg, 2);
+                    //mImageReader = ImageReader.NewInstance(960, 540, ImageFormatType.Jpeg, 2);
                     mImageReader.SetOnImageAvailableListener(mOnImageAvailableListener, mBackgroundHandler);
 
                     // Find out if we need to swap dimension to get the preview size relative to sensor
@@ -759,11 +725,10 @@ namespace EyesOn.UI.Droid.TakePhoto
                     // Danger, W.R.! Attempting to use too large a preview size could  exceed the camera
                     // bus' bandwidth limitation, resulting in gorgeous previews but the storage of
                     // garbage capture data.
-                    /*mPreviewSize = ChooseOptimalSize(map.GetOutputSizes(Class.FromType(typeof(SurfaceTexture))),
-                        rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth,
-                        maxPreviewHeight, largest);*/
+                    mPreviewSize = ChooseOptimalSize(map.GetOutputSizes(Class.FromType(typeof(SurfaceTexture))),
+                        rotatedPreviewWidth/2, rotatedPreviewHeight/2, maxPreviewWidth/2, maxPreviewHeight/2, largest);
                     //mPreviewSize = new Android.Util.Size(1280, 720);
-                    mPreviewSize = new Android.Util.Size(854, 480);
+                    //mPreviewSize = new Android.Util.Size(960, 540);
                     
                     // We fit the aspect ratio of TextureView to the size of preview we picked.
                     var orientation = Resources.Configuration.Orientation;
@@ -935,6 +900,7 @@ namespace EyesOn.UI.Droid.TakePhoto
                 return;
             }
 
+            vWidth = viewWidth; vHeight = viewHeight;
             var rotation = (int)WindowManager.DefaultDisplay.Rotation;
             Matrix matrix = new Matrix();
             RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
